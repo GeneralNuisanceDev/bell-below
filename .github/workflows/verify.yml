@@ -19,4 +19,11 @@ jobs:
           curl --fail --silent --show-error --location --retry 2 -o verify_tma01.mjs https://raw.githubusercontent.com/incidere/solana-agent-bounties/f946b2d8047635b7a17ed4d78b306eb925ce1ff3/bench/tma-01/verify_tma01.mjs
           test "$(git hash-object verify_tma01.mjs)" = 006b761c3e26659b740258a41cb393aa28547882
           node22=$(find "$RUNNER_TOOL_CACHE/node" -path '*/22.*/x64/bin/node' | sort -V | tail -1)
-          "$node22" verify_tma01.mjs game
+          /usr/bin/google-chrome --version
+          printf '%s\n' '#!/bin/bash' 'exec /usr/bin/google-chrome --no-first-run --no-default-browser-check --disable-dev-shm-usage --password-store=basic "$@" 2> >(tee -a "$RUNNER_TEMP/chrome-arena.log" >&2)' > "$RUNNER_TEMP/arena-chrome"
+          chmod +x "$RUNNER_TEMP/arena-chrome"
+          export CHROMIUM_BIN="$RUNNER_TEMP/arena-chrome"
+          if ! "$node22" verify_tma01.mjs game; then
+            cat "$RUNNER_TEMP/chrome-arena.log"
+            "$node22" verify_tma01.mjs game
+          fi
