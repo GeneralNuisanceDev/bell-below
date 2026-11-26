@@ -1,0 +1,22 @@
+name: Verify Bell Below
+on:
+  push:
+    branches: [main]
+permissions: {}
+jobs:
+  arena:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 3
+    steps:
+      - name: Run the pinned organiser verifier in Chrome
+        env:
+          CHROMIUM_BIN: /usr/bin/google-chrome
+        run: |
+          set -euo pipefail
+          git init -q game
+          git -C game fetch --quiet --depth=1 "https://github.com/$GITHUB_REPOSITORY.git" "$GITHUB_SHA"
+          git -C game checkout --quiet --detach FETCH_HEAD
+          curl --fail --silent --show-error --location --retry 2 -o verify_tma01.mjs https://raw.githubusercontent.com/incidere/solana-agent-bounties/f946b2d8047635b7a17ed4d78b306eb925ce1ff3/bench/tma-01/verify_tma01.mjs
+          test "$(git hash-object verify_tma01.mjs)" = 006b761c3e26659b740258a41cb393aa28547882
+          node22=$(find "$RUNNER_TOOL_CACHE/node" -path '*/22.*/x64/bin/node' | sort -V | tail -1)
+          "$node22" verify_tma01.mjs game
